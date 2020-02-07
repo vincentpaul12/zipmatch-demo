@@ -42,33 +42,23 @@ class ZipmatchRentSpider(Spider):
                 unit_details.update(dict(zip(keys, values)))
 
             return unit_details
-        
-        def parse_geolocation(response):  # parse geolocation from <script>
-            zippy_script = response.xpath(
-                '//div[@id="main-container"]/script/text()').get()
-            geoloc_json = re.search(r'{.+(?=;)', zippy_script).group(0)
-            geoloc_json = json.loads(geoloc_json)['_geoloc']
-
-            return geoloc_json
                 
         title = response.xpath('.//h1[@class="title"]/text()').get().strip()
         image_links = response.xpath('.//div[@class="fotorama"]/img/@src').getall()
         description = response.xpath('//p[@itemprop="description"]/text()').getall()
         description = '|'.join([x.strip() for x in description])
+        address = ', '.join(response.xpath(
+            '//div[@itemprop="address"]/span/text()').getall())
+        latitude = response.xpath('.//meta[@itemprop="latitude"]/@content').get()
+        longitude = response.xpath('.//meta[@itemprop="latitude"]/@content').get()
         
         yield {
             'title': title,
-            'image_links': image_links,
             'description': description,
             'link': response.url,
-            'unit_details': parse_unit_details(response),
-            'geolocation': parse_geolocation(response)
+            'address': address,
+            'latitude': latitude,
+            'longitude': longitude,
+            'image_links': image_links,
+            **parse_unit_details(response)
         }
-
-
-# Goal: Get info about condos/apartments available for rent in Metro Manila via ZipMatch
-# Needed information: 
-# 1. Post title
-# 2. Description
-# 3. Unit details 
-# 4. Image links
